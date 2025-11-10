@@ -15,5 +15,3 @@ COPY . .
 
 # Run tests (using Jest or other test runner)
 CMD ["npm", "test"]
-
-
