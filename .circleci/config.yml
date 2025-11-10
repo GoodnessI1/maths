@@ -2,9 +2,10 @@ version: 2.1
 
 jobs:
   build:
-    working_directory: ~/public
     docker:
       - image: cimg/node:24.11.0
+    working_directory: ~/project
+
     steps:
       - checkout
 
@@ -18,10 +19,6 @@ jobs:
       - run:
           name: Install dependencies
           command: npm ci
-
-      - run:
-          name: Fix Jest permissions
-          command: chmod +x ./node_modules/.bin/jest
 
       - run:
           name: Run tests
@@ -42,7 +39,50 @@ jobs:
 
       - store_test_results:
           path: test-results.xml
-# version 2.1
+
+
+  # 🐳 Deploy job using machine executor (so Docker works)
+  deploy:
+    machine:
+      image: ubuntu-2204:current   # ✅ gives full VM with Docker pre-installed
+    steps:
+      - checkout
+
+      - run:
+          name: Build Docker image
+          command: |
+            docker build -t dancraftdocker/maths-circle:latest .
+
+      - run:
+          name: Push Docker image to Docker Hub
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+            docker push Goodness/maths-circle:latest
+
+
+workflows:
+  version: 2
+  build_and_deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
+          context: dockerhub-creds
+          filters:
+            branches:
+              only: main
+
+
+
+
+
+
+
+
+
+
+# version: 2.1
 
 # jobs:
 #   build:
@@ -57,26 +97,26 @@ jobs:
 #           command: npm install -g npm@latest
 
 #       - restore_cache:
-#           key: dependency-cache-{{ checksum "package.json}}
+#           key: dependency-cache-{{ checksum "package.json" }}
 
 #       - run:
 #           name: Install dependencies
-#           command: npm cli
+#           command: npm ci
 
 #       - run:
 #           name: Fix Jest permissions
-#           command: chmod +x ./node_module
+#           command: chmod +x ./node_modules/.bin/jest
 
 #       - run:
 #           name: Run tests
 #           command: npm test
 
 #       - save_cache:
-#           key: dependency-cache-{{ checksum "package.json"}}
+#           key: dependency-cache-{{ checksum "package.json" }}
 #           paths:
 #             - ./node_modules
 
-#       - store-artifacts:
+#       - store_artifacts:
 #           path: test-results.xml
 #           prefix: tests
 
@@ -84,6 +124,7 @@ jobs:
 #           path: coverage
 #           prefix: coverage
 
-#       - store_tests_results:
+#       - store_test_results:
 #           path: test-results.xml
+
 
