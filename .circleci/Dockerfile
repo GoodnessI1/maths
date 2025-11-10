@@ -17,5 +17,3 @@ COPY . .
 CMD ["npm", "test"]
 
 
-
-# dckr_pat_-tQOHGshtOESW6l-lWK9D-zG4PU
